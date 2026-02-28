@@ -6,29 +6,30 @@ from db.models import Race, Skill, Player, Guild
 
 def main() -> None:
     with open("players.json", "r") as file:
-        for player_name, player in json.load(file).items():
+        players = json.load(file)
+    for player_name, player in players.items():
+        try:
+            race = Race.objects.get(name=player["race"]["name"])
+        except Exception:
+            race = Race.objects.create(name=player["race"]["name"],
+                                       description=player["race"]["description"])
+        try:
+            guild = Guild.objects.get(name=player["guild"]["name"])
+        except TypeError:
+            guild = None
+        except Exception:
+            guild = Guild.objects.create(name=player["guild"]["name"],
+                                         description=player["guild"]["description"])
+        for skill_data in player["race"]["skills"]:
             try:
-                race = Race.objects.get(name=player["race"]["name"])
-            except:
-                race = Race.objects.create(name=player["race"]["name"],
-                                           description=player["race"]["description"])
-            try:
-                guild = Guild.objects.get(name=player["guild"]["name"])
-            except TypeError:
-                guild = None
-            except:
-                guild = Guild.objects.create(name=player["guild"]["name"],
-                                             description=player["guild"]["description"])
-            for skill in player["race"]["skills"]:
-                try:
-                    skill = Skill.objects.get(name=skill["name"])
-                except:
-                    skill = Skill.objects.create(name=skill["name"],bonus=skill["bonus"], race=race)
-            Player.objects.create(nickname=player_name,
-                                  email=player["email"],
-                                  bio=player["bio"],
-                                  race=race,
-                                  guild=guild)
+                skill = Skill.objects.get(name=skill_data["name"])
+            except Exception:
+                skill = Skill.objects.create(name=skill_data["name"],bonus=skill_data["bonus"], race=race)
+        Player.objects.create(nickname=player_name,
+                              email=player["email"],
+                              bio=player["bio"],
+                              race=race,
+                              guild=guild)
 
 if __name__ == "__main__":
     main()
